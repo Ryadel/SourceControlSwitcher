@@ -6,6 +6,7 @@
         <Description xml:space="preserve">Automatically sets the Source Control Provider according to the one used by the current Visual Studio solution: Git, Subversion, TFVC or Perforce.</Description>
         <MoreInfo>https://github.com/Ryadel/SourceControlSwitcher</MoreInfo>
         <License>Resources\LICENSE.txt</License>
+        <GettingStartedGuide>https://github.com/Ryadel/SourceControlSwitcher#readme</GettingStartedGuide>
         <ReleaseNotes>Resources\CHANGELOG.txt</ReleaseNotes>
         <Icon>Resources\Icon.png</Icon>
         <PreviewImage>Resources\Preview.png</PreviewImage>

@@ -42,7 +42,7 @@ Arm64). Users of Visual Studio 2015–2019 can keep using version 1.1.2.
 
 ## Building
 
-See [BUILD.txt](BUILD.txt).
+See [BUILD.txt](https://github.com/Ryadel/SourceControlSwitcher/blob/master/BUILD.txt).
 
 ## Credits
 

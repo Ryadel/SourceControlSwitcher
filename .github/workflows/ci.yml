@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: microsoft/setup-msbuild@v3
+
+      - name: Build
+        run: msbuild SourceControlSwitcher.slnx -restore -p:Configuration=Release -p:DeployExtension=false -v:minimal
+
+      - name: Test
+        run: dotnet test SourceControlSwitcher.Tests/SourceControlSwitcher.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v7
+        with:
+          name: SourceControlSwitcher-vsix
+          path: target/Release/SourceControlSwitcher.vsix
+          if-no-files-found: error
