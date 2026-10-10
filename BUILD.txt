@@ -1,14 +1,31 @@
 BUILD
 ======
 
-Install Visual Studio 2019 [1] or an older version (up to 2015)[2]
-Just hit F6. Debug with F5.
+Requirements
+------------
+- Visual Studio 2022 (17.14 or later) or Visual Studio 2026, with the "Visual Studio extension development"
+  workload (the VSSDK build tools also come from NuGet, so a plain MSBuild from those versions works too).
+- .NET Framework 4.7.2 targeting pack.
 
-Build script installs the VSPackage in %LOCALAPPDATA%\Microsoft\VisualStudio\16.0Exp\Extensions
-"Exp" means a VS local storage for experimental purposes.
+Build
+-----
+Open SourceControlSwitcher.slnx and build (Ctrl+Shift+B), or from a Developer Command Prompt:
 
-It is run by launching the DevEnv with:
-c:\Program Files (x86)\Microsoft Visual Studio 16.0\Common7\IDE\devenv.exe /rootsuffix Exp
+    msbuild SourceControlSwitcher.slnx -restore -p:Configuration=Release
 
-[1] https://visualstudio.microsoft.com/it/downloads/
-[2] https://visualstudio.microsoft.com/it/vs/older-downloads/
+The VSIX is written to target\Release\SourceControlSwitcher.vsix.
+
+Key.snk (the strong-name key) is not in the repository: a local one is generated on the first build.
+
+Tests
+-----
+The detection and configuration logic is covered by unit tests that do not need Visual Studio:
+
+    dotnet test SourceControlSwitcher.Tests\SourceControlSwitcher.Tests.csproj
+
+Debug
+-----
+Press F5: Visual Studio starts an experimental instance (devenv.exe /rootsuffix Exp) with the extension
+installed. Set Tools > Options > Source Control Switcher > General > Logging to Verbose and watch the
+"Source Control Switcher" pane of the Output window. Starting VS with /log also records the messages in the
+activity log.

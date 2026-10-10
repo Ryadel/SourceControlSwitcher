@@ -1,4 +1,9 @@
 INSTALL
 =======
 
-Build and install &(TargetDir)\SourceControlSwitcher.vsix
+From Visual Studio: Extensions > Manage Extensions, search for "Source Control Switcher".
+
+From a local build: double-click target\Release\SourceControlSwitcher.vsix (see BUILD.txt), or run
+VSIXInstaller.exe SourceControlSwitcher.vsix.
+
+Supported: Visual Studio 2022 and Visual Studio 2026 (Community, Professional, Enterprise; x64 and Arm64).
