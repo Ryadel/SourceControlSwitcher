@@ -52,29 +52,35 @@
     <Reference Include="System.Design" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AppHelper.cs" />
-    <Compile Include="Guids.cs" />
-    <Compile Include="Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="MainSite.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SccUtils.cs" />
-    <Compile Include="SolutionEvents.cs" />
-    <Compile Include="SwitcherOptions.cs">
+    <Compile Include="Commands\DetectProviderCommand.cs" />
+    <Compile Include="Detection\CustomProviderRule.cs" />
+    <Compile Include="Detection\DetectionResult.cs" />
+    <Compile Include="Detection\DetectionSettings.cs" />
+    <Compile Include="Detection\PerforceDetector.cs" />
+    <Compile Include="Detection\RepositoryDetector.cs" />
+    <Compile Include="Detection\RepositoryKind.cs" />
+    <Compile Include="Diagnostics\Logger.cs" />
+    <Compile Include="Options\EnumDescriptionConverter.cs" />
+    <Compile Include="Options\GeneralOptions.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="TaskManager.cs" />
+    <Compile Include="Options\ProviderChoices.cs" />
+    <Compile Include="Options\SettingValues.cs" />
+    <Compile Include="PackageIds.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Providers\KnownSccProviders.cs" />
+    <Compile Include="Providers\ProviderSelector.cs" />
+    <Compile Include="Providers\SccProviderInfo.cs" />
+    <Compile Include="Providers\SccProviderService.cs" />
+    <Compile Include="Services\SourceControlSwitchService.cs" />
+    <Compile Include="SourceControlSwitcherPackage.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
+    <VSCTCompile Include="SourceControlSwitcher.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="VSPackage.resx">
       <MergeWithCTO>true</MergeWithCTO>
       <ManifestResourceName>VSPackage</ManifestResourceName>

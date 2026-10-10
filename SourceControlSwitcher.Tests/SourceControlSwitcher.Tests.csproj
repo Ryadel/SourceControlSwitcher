@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Unit tests for the parts of the extension that do not depend on Visual Studio: the source files are linked,
+       so the tests run with "dotnet test" without the VS SDK. -->
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>SourceControlSwitcher.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SourceControlSwitcher\Detection\*.cs" Link="Linked\Detection\%(Filename)%(Extension)" />
+    <Compile Include="..\SourceControlSwitcher\Providers\KnownSccProviders.cs" Link="Linked\Providers\KnownSccProviders.cs" />
+    <Compile Include="..\SourceControlSwitcher\Providers\ProviderSelector.cs" Link="Linked\Providers\ProviderSelector.cs" />
+    <Compile Include="..\SourceControlSwitcher\Providers\SccProviderInfo.cs" Link="Linked\Providers\SccProviderInfo.cs" />
+    <Compile Include="..\SourceControlSwitcher\Options\EnumDescriptionConverter.cs" Link="Linked\Options\EnumDescriptionConverter.cs" />
+    <Compile Include="..\SourceControlSwitcher\Options\ProviderChoices.cs" Link="Linked\Options\ProviderChoices.cs" />
+    <Compile Include="..\SourceControlSwitcher\Options\SettingValues.cs" Link="Linked\Options\SettingValues.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MSTest" Version="4.5.1" />
+  </ItemGroup>
+</Project>
