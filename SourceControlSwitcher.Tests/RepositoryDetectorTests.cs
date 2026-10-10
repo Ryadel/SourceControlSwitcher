@@ -106,6 +106,33 @@ namespace SourceControlSwitcher.Tests
         }
 
         [TestMethod]
+        public void TeamFoundation_SlnxBindings_AreDetected()
+        {
+            using (var tree = new TempTree())
+            {
+                string slnx = tree.File("repo/App.slnx",
+                    "<Solution>\r\n  <Properties Name=\"TeamFoundationVersionControl\">\r\n" +
+                    "    <Property Name=\"SccTeamFoundationServer\" Value=\"https://tfs.example.com/tfs\" />\r\n  </Properties>\r\n</Solution>\r\n");
+
+                Assert.AreEqual(RepositoryKind.TeamFoundation, RepositoryDetector.Detect(slnx, NoParents).Kind);
+            }
+        }
+
+        [TestMethod]
+        public void CustomMarker_WinsOverSolutionBindings()
+        {
+            using (var tree = new TempTree())
+            {
+                var providerGuid = Guid.NewGuid();
+                tree.File("repo/.vault", "");
+                string sln = tree.File("repo/App.sln", "SccTeamFoundationServer = https://tfs.example.com/tfs");
+                var settings = new DetectionSettings { CustomProviders = new[] { new CustomProviderRule(".vault", providerGuid) } };
+
+                Assert.AreEqual(RepositoryKind.Custom, RepositoryDetector.Detect(sln, settings).Kind);
+            }
+        }
+
+        [TestMethod]
         public void TeamFoundation_SolutionBindings_CanBeDisabled()
         {
             using (var tree = new TempTree())

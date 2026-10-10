@@ -31,6 +31,9 @@ namespace SourceControlSwitcher.Services
         private string _currentPath;
         private int _generation;
 
+        // Settings that affect detection/selection at the last evaluation; see OnOptionsChanged.
+        private string _lastSwitchingSignature;
+
         public SourceControlSwitchService(AsyncPackage package, SccProviderService providers, IVsSolution solution,
             IVsStatusbar statusBar, Logger log, Func<GeneralOptions> getOptions)
         {
@@ -63,13 +66,29 @@ namespace SourceControlSwitcher.Services
             _generation++;
         }
 
-        /// <summary>Options were applied: re-evaluate the open solution with the new settings.</summary>
+        /// <summary>
+        /// Options were applied: re-evaluate the open solution, but only when a setting that affects the outcome
+        /// changed (so applying e.g. a new logging level does not override a provider chosen by hand), and only
+        /// once the Options dialog has closed and VS is idle.
+        /// </summary>
         public void OnOptionsChanged()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
-            string path = _currentPath ?? GetOpenSolutionOrFolderPath();
-            if (path != null)
-                Evaluate(path, force: true, userInitiated: false);
+            var options = _getOptions();
+            _log.Level = options.LogLevel;
+
+            string signature = options.GetSwitchingSignature();
+            if (signature == _lastSwitchingSignature)
+                return;
+            _lastSwitchingSignature = signature;
+
+            _package.JoinableTaskFactory.StartOnIdle(() =>
+            {
+                ThreadHelper.ThrowIfNotOnUIThread();
+                string path = _currentPath ?? GetOpenSolutionOrFolderPath();
+                if (path != null)
+                    Evaluate(path, force: true, userInitiated: false);
+            }).FileAndForget("SourceControlSwitcher/OptionsChanged");
         }
 
         /// <summary>Tools > Detect Source Control Provider: always runs, even when automatic switching is off.</summary>
@@ -94,9 +113,11 @@ namespace SourceControlSwitcher.Services
 
             var options = _getOptions();
             _log.Level = options.LogLevel;
+            _lastSwitchingSignature = options.GetSwitchingSignature();
 
             if (!userInitiated && !options.AutoSwitch)
             {
+                _generation++; // Also discards a Perforce check still running for an earlier evaluation.
                 _log.Verbose("Automatic switching is off; ignoring " + path);
                 return;
             }
@@ -122,32 +143,38 @@ namespace SourceControlSwitcher.Services
 
             if (options.DetectPerforce)
             {
-                string client = PerforceDetector.FindClient();
-                if (client != null)
-                {
-                    StartPerforceDetection(path, client, TimeSpan.FromSeconds(options.PerforceTimeoutSeconds), generation, userInitiated);
-                    return;
-                }
-                _log.Verbose(PerforceDetector.ClientExecutable + " not found on PATH; Perforce detection skipped.");
+                StartPerforceDetection(path, TimeSpan.FromSeconds(options.PerforceTimeoutSeconds), generation, userInitiated);
+                return;
             }
 
             ReportNothingDetected(path, userInitiated);
         }
 
-        private void StartPerforceDetection(string path, string client, TimeSpan timeout, int generation, bool userInitiated)
+        private void StartPerforceDetection(string path, TimeSpan timeout, int generation, bool userInitiated)
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             string directory = RepositoryDetector.GetStartDirectory(path);
-            _log.Verbose("No marker found; asking Perforce (" + client + ") in the background.");
+            _log.Verbose("No marker found; checking Perforce in the background.");
 
             _package.JoinableTaskFactory.RunAsync(async () =>
             {
                 var token = _package.DisposalToken;
-                bool inWorkspace = await Task.Run(() => PerforceDetector.IsInWorkspace(client, directory, timeout, token), token);
+
+                // Both the PATH lookup (File.Exists on every entry, possibly on network drives) and p4 itself can
+                // block: keep them off the UI thread.
+                string client = null;
+                bool inWorkspace = await Task.Run(() =>
+                {
+                    client = PerforceDetector.FindClient();
+                    return client != null && PerforceDetector.IsInWorkspace(client, directory, timeout, token);
+                }, token);
                 await _package.JoinableTaskFactory.SwitchToMainThreadAsync(token);
 
                 if (generation != _generation)
                     return; // Another solution was opened meanwhile.
+
+                if (client == null)
+                    _log.Verbose(PerforceDetector.ClientExecutable + " not found on PATH; Perforce detection skipped.");
 
                 if (inWorkspace)
                 {
@@ -246,7 +273,9 @@ namespace SourceControlSwitcher.Services
                 return null;
             try
             {
-                return Path.GetFullPath(path).TrimEnd('\\', '/');
+                string fullPath = Path.GetFullPath(path);
+                // Keep "C:\" as is: "C:" would mean the current directory on drive C.
+                return fullPath.Length > (Path.GetPathRoot(fullPath)?.Length ?? 0) ? fullPath.TrimEnd('\\', '/') : fullPath;
             }
             catch (Exception ex) when (ex is ArgumentException || ex is NotSupportedException || ex is IOException || ex is System.Security.SecurityException)
             {

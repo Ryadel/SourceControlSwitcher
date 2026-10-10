@@ -34,6 +34,24 @@ namespace SourceControlSwitcher.Tests
         }
 
         [TestMethod]
+        public void WhereOutput_MappedFolder_IsWorkspace()
+        {
+            var lines = new[] { "info: //depot/app/... //ws/app/... C:\\ws\\app\\...", "exit: 0" };
+            Assert.IsTrue(PerforceDetector.IsWorkspaceOutput(lines, 0));
+        }
+
+        [TestMethod]
+        [DataRow(0, "warning: C:\\other\\... - file(s) not in client view.", "exit: 0")]
+        [DataRow(1, "error: Path 'C:\\other\\...' is not under client's root 'C:\\ws'.", "exit: 1")]
+        [DataRow(0, "info: //depot/app/... //ws/app/... C:\\ws\\app\\...", "exit: 1")]
+        [DataRow(1, "info: //depot/app/... //ws/app/... C:\\ws\\app\\...", "exit: 0")]
+        [DataRow(0, "text: nothing useful", "exit: 0")]
+        public void WhereOutput_WarningsErrorsOrNoMapping_AreNotWorkspace(int exitCode, string line1, string line2)
+        {
+            Assert.IsFalse(PerforceDetector.IsWorkspaceOutput(new[] { line1, line2 }, exitCode));
+        }
+
+        [TestMethod]
         public void IsInWorkspace_MissingClient_ReturnsFalse()
         {
             using (var tree = new TempTree())

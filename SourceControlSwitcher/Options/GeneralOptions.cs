@@ -79,8 +79,9 @@ namespace SourceControlSwitcher.Options
 
         [Category(DetectionCategory)]
         [DisplayName("Detect TFVC bindings in .sln files")]
-        [Description("Treat a solution whose .sln file contains Team Foundation bindings as a TFVC solution, even when " +
-            "no local workspace marker is found.")]
+        [Description("Treat a solution whose .sln/.slnx file contains Team Foundation bindings as a TFVC solution, even " +
+            "when no local workspace marker is found. Turn off for repositories migrated from TFVC that still carry " +
+            "old bindings.")]
         [DefaultValue(true)]
         public bool DetectTeamFoundationFromSolution { get; set; } = true;
 
@@ -119,6 +120,17 @@ namespace SourceControlSwitcher.Options
             };
         }
 
+        /// <summary>
+        /// The settings that change which provider gets activated (not logging or notifications), as one string:
+        /// used to skip re-evaluation when unrelated options are applied.
+        /// </summary>
+        public string GetSwitchingSignature()
+        {
+            return string.Join("|", AutoSwitch, GitProvider, SubversionProvider, TeamFoundationProvider, PerforceProvider,
+                SearchParentFolders, DetectTeamFoundationFromSolution, DetectPerforce, PerforceTimeoutSeconds,
+                (CustomProviders ?? string.Empty).Trim());
+        }
+
         public ProviderPreferences ToProviderPreferences()
         {
             return new ProviderPreferences
@@ -133,9 +145,9 @@ namespace SourceControlSwitcher.Options
         public override void LoadSettingsFromStorage()
         {
             ThreadHelper.ThrowIfNotOnUIThread();
+            // No early return when the collection does not exist yet: the defaults below are what a reload
+            // (Cancel, Reset) must restore.
             var store = GetStore();
-            if (!store.CollectionExists(CollectionPath))
-                return;
 
             AutoSwitch = store.GetBoolean(CollectionPath, nameof(AutoSwitch), true);
             ShowStatusBarNotifications = store.GetBoolean(CollectionPath, nameof(ShowStatusBarNotifications), true);

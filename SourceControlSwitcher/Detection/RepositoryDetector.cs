@@ -55,17 +55,16 @@ namespace SourceControlSwitcher.Detection
             if (startDirectory == null)
                 return DetectionResult.None;
 
-            // Explicit TFVC bindings in the solution file win over the folder layout.
-            if (settings.DetectTeamFoundationFromSolution && HasTeamFoundationBindings(solutionOrFolderPath))
-                return new DetectionResult(RepositoryKind.TeamFoundation, solutionOrFolderPath, Guid.Empty, "TFVC bindings in the solution file");
-
             try
             {
+                // Nearest folder first. The solution file is checked once, at its own folder level.
+                string solutionFile = solutionOrFolderPath;
                 for (var directory = new DirectoryInfo(startDirectory); directory != null; directory = settings.SearchParentFolders ? directory.Parent : null)
                 {
-                    var result = DetectInDirectory(directory.FullName, settings);
+                    var result = DetectInDirectory(directory.FullName, solutionFile, settings);
                     if (result.IsDetected)
                         return result;
+                    solutionFile = null;
                 }
             }
             catch (Exception ex) when (IsPathException(ex))
@@ -76,13 +75,17 @@ namespace SourceControlSwitcher.Detection
             return DetectionResult.None;
         }
 
-        private static DetectionResult DetectInDirectory(string directory, DetectionSettings settings)
+        private static DetectionResult DetectInDirectory(string directory, string solutionFile, DetectionSettings settings)
         {
             foreach (var rule in settings.CustomProviders)
             {
                 if (EntryExists(directory, rule.Marker))
                     return new DetectionResult(RepositoryKind.Custom, directory, rule.ProviderGuid, "custom marker '" + rule.Marker + "'");
             }
+
+            // Explicit TFVC bindings in the solution file win over the folder markers next to it.
+            if (solutionFile != null && settings.DetectTeamFoundationFromSolution && HasTeamFoundationBindings(solutionFile))
+                return new DetectionResult(RepositoryKind.TeamFoundation, solutionFile, Guid.Empty, "TFVC bindings in the solution file");
 
             // .git is a folder in a regular clone and a file in worktrees and submodules.
             if (EntryExists(directory, GitMarker))
@@ -105,8 +108,13 @@ namespace SourceControlSwitcher.Detection
 
         public static bool HasTeamFoundationBindings(string solutionPath)
         {
-            if (string.IsNullOrWhiteSpace(solutionPath)
-                || !string.Equals(Path.GetExtension(solutionPath), ".sln", StringComparison.OrdinalIgnoreCase)
+            if (string.IsNullOrWhiteSpace(solutionPath))
+                return false;
+
+            // .sln keeps bindings in GlobalSection(TeamFoundationVersionControl). The text scan also covers .slnx
+            // files, should a converted solution carry the same key.
+            string extension = Path.GetExtension(solutionPath);
+            if (!(string.Equals(extension, ".sln", StringComparison.OrdinalIgnoreCase) || string.Equals(extension, ".slnx", StringComparison.OrdinalIgnoreCase))
                 || !File.Exists(solutionPath))
             {
                 return false;
