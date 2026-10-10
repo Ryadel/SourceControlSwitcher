@@ -16,7 +16,7 @@ SourceControlSwitcher - v1.2.0
   * Removed clients that are no longer maintained: Easy Git Integration Tools / Git Source Control Provider,
     VisualHG, VSHG, HgSccPackage (Mercurial support).
   * Solution migrated to .slnx; unit tests added.
-  * Marketplace listing: 200x200 preview image and Getting Started link. Builds, tests and releases now run
+  * Icon redrawn from the vector logo; Getting Started link in the extension details. Builds, tests and releases now run
     on GitHub Actions (CI on every push and pull request; tag vX.Y.Z publishes to the Marketplace).
 
 SourceControlSwitcher - v1.1.2

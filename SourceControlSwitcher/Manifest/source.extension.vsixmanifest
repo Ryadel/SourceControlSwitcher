@@ -9,7 +9,6 @@
         <GettingStartedGuide>https://github.com/Ryadel/SourceControlSwitcher#readme</GettingStartedGuide>
         <ReleaseNotes>Resources\CHANGELOG.txt</ReleaseNotes>
         <Icon>Resources\Icon.png</Icon>
-        <PreviewImage>Resources\Preview.png</PreviewImage>
         <Tags>Source Control, Source Code Control, Source Control Provider, Source Control Client, Git, SVN, Subversion, TFVC, Team Foundation, Perforce, Helix</Tags>
     </Metadata>
     <Installation InstalledByMsi="false">
