@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VsixLanguagePack Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema-lp/2010">
+  <LocalizedName>Source Control Switcher</LocalizedName>
+  <LocalizedDescription>Définit automatiquement le fournisseur de contrôle de code source en fonction de celui utilisé par la solution Visual Studio ouverte : Git, Subversion, TFVC ou Perforce.</LocalizedDescription>
+  <MoreInfoUrl>https://github.com/Ryadel/SourceControlSwitcher</MoreInfoUrl>
+</VsixLanguagePack>
