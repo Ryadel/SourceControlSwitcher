@@ -1,3 +1,22 @@
+SourceControlSwitcher - v1.2.0
+------------------------------------------
+  * Supports Visual Studio 2022 and Visual Studio 2026 (x64 and Arm64). Visual Studio 2015-2019: use 1.1.2.
+  * Includes the unreleased 1.1.3 changes: Visual Studio 2022 support and AnkhSVN 2019 (@joe-kr).
+  * New: Team Foundation Version Control (TFVC), from .sln/.slnx bindings or a local workspace (based on work by @davideciarmiello).
+  * New: Tools > Detect Source Control Provider, to switch on demand (#7).
+  * New: custom marker=providerGuid rules for any other source control provider (checked before the built-in ones).
+  * New options: automatic switching, status bar notifications, logging, parent folder search,
+    TFVC binding detection, Perforce detection and timeout. Provider choices now have readable names.
+  * Git worktrees and submodules (.git file) and Open Folder are detected.
+  * Perforce detection runs in the background, only when p4.exe is installed, with a timeout; it uses
+    'p4 -s where' and no longer trusts the exit code alone.
+  * Applying Tools > Options re-evaluates the open solution only when a setting that affects switching changed.
+  * Diagnostics moved to an Output window pane and the activity log (no more Error List warnings).
+  * The VSIX no longer bundles Visual Studio assemblies (12.9 MB -> a few KB).
+  * Removed clients that are no longer maintained: Easy Git Integration Tools / Git Source Control Provider,
+    VisualHG, VSHG, HgSccPackage (Mercurial support).
+  * Solution migrated to .slnx; unit tests added.
+
 SourceControlSwitcher - v1.1.2
 ------------------------------------------
   * fix:cannot switch source control when visual studio start with sln (@QianMoXi)

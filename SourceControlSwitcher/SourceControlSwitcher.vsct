@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidSourceControlSwitcherPackage">
+    <Groups>
+      <Group guid="guidSourceControlSwitcherCommandSet" id="ToolsMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidSourceControlSwitcherCommandSet" id="DetectProviderCommand" priority="0x0100" type="Button">
+        <Parent guid="guidSourceControlSwitcherCommandSet" id="ToolsMenuGroup" />
+        <Strings>
+          <ButtonText>Detect Source Control Provider</ButtonText>
+          <CanonicalName>.Tools.DetectSourceControlProvider</CanonicalName>
+          <LocCanonicalName>.Tools.DetectSourceControlProvider</LocCanonicalName>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="guidSourceControlSwitcherPackage" value="{1c0ec7cd-f652-42c4-a6ad-02b2b3653a1e}" />
+    <GuidSymbol name="guidSourceControlSwitcherCommandSet" value="{4b8714ec-a9e9-4e3d-9fa1-e3548ae80475}">
+      <IDSymbol name="ToolsMenuGroup" value="0x1020" />
+      <IDSymbol name="DetectProviderCommand" value="0x0100" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

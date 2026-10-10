@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="BUILD.txt" />
+    <File Path="CHANGELOG.txt" />
+    <File Path="INSTALL.txt" />
+    <File Path="LICENSE.txt" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="SourceControlSwitcher.Tests/SourceControlSwitcher.Tests.csproj" />
+  <Project Path="SourceControlSwitcher/SourceControlSwitcher.csproj" />
+</Solution>
