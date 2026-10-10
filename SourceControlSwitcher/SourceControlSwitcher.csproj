@@ -104,6 +104,18 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Resource Include="Resources\LICENSE_SCCAS.txt" />
+    <Content Include="Manifest\it\extension.vsixlangpack">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>it</VSIXSubPath>
+    </Content>
+    <Content Include="Manifest\fr\extension.vsixlangpack">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>fr</VSIXSubPath>
+    </Content>
+    <Content Include="Manifest\de\extension.vsixlangpack">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>de</VSIXSubPath>
+    </Content>
     <None Include="Manifest\source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>

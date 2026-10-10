@@ -68,9 +68,15 @@ If nothing is found and Perforce detection is enabled, it asks the Perforce clie
 repository is found, the provider configured for it is activated; when nothing is found, the current provider is
 left unchanged.
 
+Every switch is logged in the *Source Control Switcher* pane of the Output window:
+
+<p align="center"><img src="https://raw.githubusercontent.com/Ryadel/SourceControlSwitcher/master/docs/images/output.png" alt="Output window: the provider switches from TFVC to Git as solutions are opened" /></p>
+
 ## Options
 
 **Tools > Options > Source Control Switcher > General**
+
+<p align="center"><img src="https://raw.githubusercontent.com/Ryadel/SourceControlSwitcher/master/docs/images/options.png" alt="Source Control Switcher options" /></p>
 
 | Category | Option | Default | Description |
 |---|---|---|---|
