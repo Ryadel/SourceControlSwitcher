@@ -15,7 +15,8 @@ Open SourceControlSwitcher.slnx and build (Ctrl+Shift+B), or from a Developer Co
 
 The VSIX is written to target\Release\SourceControlSwitcher.vsix.
 
-Key.snk (the strong-name key) is not in the repository: a local one is generated on the first build.
+Key.snk is the strong-name key of the assembly. It is committed on purpose, as Microsoft recommends for
+open-source projects: a strong name provides identity, not security.
 
 Tests
 -----

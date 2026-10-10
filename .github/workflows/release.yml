@@ -21,8 +21,6 @@ jobs:
     runs-on: windows-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
-    env:
-      SNK_BASE64: ${{ secrets.SNK_BASE64 }}
     steps:
       - uses: actions/checkout@v7
 
@@ -42,11 +40,6 @@ jobs:
           if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") { throw "Tag $env:GITHUB_REF_NAME does not match manifest version v$version" }
           if (-not (Select-String -Path 'CHANGELOG.txt' -SimpleMatch "SourceControlSwitcher - v$version" -Quiet)) { throw "CHANGELOG.txt has no section for v$version" }
           "version=$version" >> $env:GITHUB_OUTPUT
-
-      - name: Restore strong-name key
-        if: env.SNK_BASE64 != ''
-        shell: pwsh
-        run: '[IO.File]::WriteAllBytes("$PWD/Key.snk", [Convert]::FromBase64String($env:SNK_BASE64))'
 
       - name: Build
         run: msbuild SourceControlSwitcher.slnx -restore -p:Configuration=Release -p:DeployExtension=false -v:minimal

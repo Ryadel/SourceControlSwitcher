@@ -142,8 +142,4 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
-  <!-- Key.snk is not committed: generate a local one when missing, wherever the project is built from. -->
-  <Target Name="EnsureStrongNameKey" BeforeTargets="BeforeBuild" Condition="!Exists('$(MSBuildProjectDirectory)\..\Key.snk')">
-    <Exec Command="&quot;$(TargetFrameworkSDKToolsDirectory)sn.exe&quot; -k &quot;$(MSBuildProjectDirectory)\..\Key.snk&quot;" />
-  </Target>
 </Project>
