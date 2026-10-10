@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json.schemastore.org/vsix-publish",
+  "categories": [ "source control", "team development" ],
+  "identity": {
+    "internalName": "SourceControlSwitcher"
+  },
+  "overview": "../../README.md",
+  "priceCategory": "free",
+  "publisher": "Ryadel",
+  "private": false,
+  "qna": true,
+  "repo": "https://github.com/Ryadel/SourceControlSwitcher"
+}
