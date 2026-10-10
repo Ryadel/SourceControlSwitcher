@@ -1,34 +1,42 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="F55A99AF-CA1C-4DE7-BBFB-08CF4F3AB282" Version="1.1.3" Language="en-US" Publisher="Ryadel" />
+        <Identity Id="F55A99AF-CA1C-4DE7-BBFB-08CF4F3AB282" Version="1.2.0" Language="en-US" Publisher="Ryadel" />
         <DisplayName>Source Control Switcher</DisplayName>
-        <Description xml:space="preserve">Automatically sets the Source Control Provider according to the one used by the current Visual Studio project.</Description>
-        <MoreInfo>https://www.ryadel.com/en/portfolio/source-control-switcher/</MoreInfo>
+        <Description xml:space="preserve">Automatically sets the Source Control Provider according to the one used by the current Visual Studio solution: Git, Subversion, TFVC or Perforce.</Description>
+        <MoreInfo>https://github.com/Ryadel/SourceControlSwitcher</MoreInfo>
         <License>Resources\LICENSE.txt</License>
         <ReleaseNotes>Resources\CHANGELOG.txt</ReleaseNotes>
         <Icon>Resources\Icon.png</Icon>
         <PreviewImage>Resources\Preview.png</PreviewImage>
-        <Tags>Source Control, Source Code Control, Source Control Provider, Source Control Client, Git, Mercurial, HG, SVN, Helix, </Tags>
+        <Tags>Source Control, Source Code Control, Source Control Provider, Source Control Client, Git, SVN, Subversion, TFVC, Team Foundation, Perforce, Helix</Tags>
     </Metadata>
     <Installation InstalledByMsi="false">
-      
-      <InstallationTarget Version="[17.0,18.0)" Id="Microsoft.VisualStudio.Pro">
-        <ProductArchitecture>amd64</ProductArchitecture>
-      </InstallationTarget>
-      <InstallationTarget Version="[17.0,18.0)" Id="Microsoft.VisualStudio.Community"  >
-        <ProductArchitecture>amd64</ProductArchitecture>
-      </InstallationTarget>
-      <InstallationTarget Version="[17.0,18.0)" Id="Microsoft.VisualStudio.Enterprise" >
-        <ProductArchitecture>amd64</ProductArchitecture>
-      </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,)">
+            <ProductArchitecture>amd64</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,)">
+            <ProductArchitecture>arm64</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[17.0,)">
+            <ProductArchitecture>amd64</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[17.0,)">
+            <ProductArchitecture>arm64</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[17.0,)">
+            <ProductArchitecture>amd64</ProductArchitecture>
+        </InstallationTarget>
+        <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[17.0,)">
+            <ProductArchitecture>arm64</ProductArchitecture>
+        </InstallationTarget>
     </Installation>
-  <Dependencies>
-    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.6.1,4.7.2)" />
-  </Dependencies>
-  <Prerequisites>
-    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,18.0)" DisplayName="Visual Studio core editor" />
-  </Prerequisites>
+    <Dependencies>
+        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.7.2,)" />
+    </Dependencies>
+    <Prerequisites>
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,)" DisplayName="Visual Studio core editor" />
+    </Prerequisites>
     <Assets>
         <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
     </Assets>
