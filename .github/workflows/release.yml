@@ -91,10 +91,11 @@ jobs:
           VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
         run: |
           if (-not $env:VS_MARKETPLACE_PAT) { throw 'Secret VS_MARKETPLACE_PAT is not set' }
-          # VsixPublisher ships with the Microsoft.VSSDK.BuildTools package: restore it.
+          # VsixPublisher ships with the Microsoft.VSSDK.BuildTools package: restore it. Use the copy under bin\lib,
+          # which has its dependencies next to it (the one under bin crashes while initializing telemetry).
           msbuild SourceControlSwitcher/SourceControlSwitcher.csproj -t:Restore -v:minimal
           $publisher = Get-ChildItem "$env:USERPROFILE\.nuget\packages\microsoft.vssdk.buildtools" -Recurse -Filter VsixPublisher.exe |
-            Where-Object { $_.Directory.Name -eq 'bin' } | Sort-Object FullName -Descending | Select-Object -First 1
+            Where-Object { $_.Directory.Name -eq 'lib' } | Sort-Object FullName -Descending | Select-Object -First 1
           if (-not $publisher) { throw 'VsixPublisher.exe not found' }
           & $publisher.FullName publish `
             -payload 'release/target/Release/SourceControlSwitcher.vsix' `
