@@ -334,3 +334,7 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Workspace safety net: never commit sibling development material here
+private/
+SourceControlSwitcher.Dev.slnx
