@@ -1,17 +1,7 @@
 name: Release
 
-# Publishes a new version when a tag vX.Y.Z is pushed:
-#   1. checks that the tag matches the version in the manifest, AssemblyInfo and package registration;
-#   2. builds and tests;
-#   3. publishes the VSIX to the Visual Studio Marketplace;
-#   4. creates the GitHub release with the VSIX and the CHANGELOG section as notes.
-# Run it manually (workflow_dispatch) for a dry run: steps 1-2 only, VSIX uploaded as an artifact.
-#
-# Secrets:
-#   VS_MARKETPLACE_PAT  Azure DevOps personal access token, scope "Marketplace (Manage)", owned by an account
-#                       that is a member of the "Ryadel" Marketplace publisher. Required to publish.
-#   SNK_BASE64          Optional: the strong-name key (Key.snk) encoded in base64. Without it the build
-#                       generates a new key on every run.
+# Push a tag vX.Y.Z to release: the workflow checks the versions, builds, tests, publishes the VSIX to the
+# Visual Studio Marketplace and creates the GitHub release. Run it manually for a dry run (no publishing).
 
 on:
   push:
@@ -19,21 +9,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release
   cancel-in-progress: false
 
 jobs:
-  release:
-    name: Build and publish
+  build:
+    name: Build and test
     runs-on: windows-latest
-    # Protect the environment in Settings > Environments to require an approval before publishing.
-    environment: marketplace
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     env:
       SNK_BASE64: ${{ secrets.SNK_BASE64 }}
-      PUBLISH: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -50,7 +39,7 @@ jobs:
           Write-Host "Manifest: $version  AssemblyVersion: $assembly  InstalledProductRegistration: $registration"
           if ($assembly -ne "$version.0") { throw "AssemblyVersion $assembly does not match manifest version $version" }
           if ($registration -ne $version) { throw "InstalledProductRegistration $registration does not match manifest version $version" }
-          if ($env:PUBLISH -eq 'true' -and $env:GITHUB_REF_NAME -ne "v$version") { throw "Tag $env:GITHUB_REF_NAME does not match manifest version v$version" }
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$version") { throw "Tag $env:GITHUB_REF_NAME does not match manifest version v$version" }
           if (-not (Select-String -Path 'CHANGELOG.txt' -SimpleMatch "SourceControlSwitcher - v$version" -Quiet)) { throw "CHANGELOG.txt has no section for v$version" }
           "version=$version" >> $env:GITHUB_OUTPUT
 
@@ -75,42 +64,63 @@ jobs:
           $lines[($start + 2)..($end - 1)] | Set-Content -Encoding utf8 'release-notes.md'
           Get-Content 'release-notes.md'
 
-      - name: Upload VSIX
+      - name: Upload VSIX and release notes
         uses: actions/upload-artifact@v7
         with:
-          name: SourceControlSwitcher-${{ steps.version.outputs.version }}-vsix
-          path: target/Release/SourceControlSwitcher.vsix
+          name: release
+          path: |
+            target/Release/SourceControlSwitcher.vsix
+            release-notes.md
           if-no-files-found: error
 
+  publish:
+    name: Publish
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: windows-latest
+    environment: marketplace
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: microsoft/setup-msbuild@v3
+
+      - name: Download VSIX and release notes
+        uses: actions/download-artifact@v7
+        with:
+          name: release
+          path: release
+
       - name: Publish to the Visual Studio Marketplace
-        if: env.PUBLISH == 'true'
         shell: pwsh
         env:
           VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
         run: |
           if (-not $env:VS_MARKETPLACE_PAT) { throw 'Secret VS_MARKETPLACE_PAT is not set' }
-          # VsixPublisher ships with the Microsoft.VSSDK.BuildTools package restored by the build.
+          # VsixPublisher ships with the Microsoft.VSSDK.BuildTools package: restore it.
+          msbuild SourceControlSwitcher/SourceControlSwitcher.csproj -t:Restore -v:minimal
           $publisher = Get-ChildItem "$env:USERPROFILE\.nuget\packages\microsoft.vssdk.buildtools" -Recurse -Filter VsixPublisher.exe |
             Where-Object { $_.Directory.Name -eq 'bin' } | Sort-Object FullName -Descending | Select-Object -First 1
           if (-not $publisher) { throw 'VsixPublisher.exe not found' }
           & $publisher.FullName publish `
-            -payload 'target/Release/SourceControlSwitcher.vsix' `
+            -payload 'release/target/Release/SourceControlSwitcher.vsix' `
             -publishManifest 'SourceControlSwitcher/Manifest/publishManifest.json' `
             -personalAccessToken $env:VS_MARKETPLACE_PAT
           if ($LASTEXITCODE -ne 0) { throw "VsixPublisher failed with exit code $LASTEXITCODE" }
 
       - name: Create GitHub release
-        if: env.PUBLISH == 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = $env:GITHUB_REF_NAME
+          $vsix = 'release/target/Release/SourceControlSwitcher.vsix'
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag 'target/Release/SourceControlSwitcher.vsix' --clobber
+            gh release upload $tag $vsix --clobber
           } else {
-            gh release create $tag 'target/Release/SourceControlSwitcher.vsix' --verify-tag `
-              --title "Source Control Switcher ${{ steps.version.outputs.version }}" --notes-file 'release-notes.md'
+            gh release create $tag $vsix --verify-tag `
+              --title "Source Control Switcher ${{ needs.build.outputs.version }}" --notes-file 'release/release-notes.md'
           }
           if ($LASTEXITCODE -ne 0) { throw "gh release failed with exit code $LASTEXITCODE" }
