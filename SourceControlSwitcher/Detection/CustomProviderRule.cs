@@ -12,6 +12,8 @@ namespace SourceControlSwitcher.Detection
     {
         public CustomProviderRule(string marker, Guid providerGuid)
         {
+            if (!IsValidMarker(marker))
+                throw new ArgumentException("Not a valid file or folder name: '" + marker + "'.", nameof(marker));
             Marker = marker;
             ProviderGuid = providerGuid;
         }
@@ -55,7 +57,7 @@ namespace SourceControlSwitcher.Detection
                 return false;
 
             string marker = entry.Substring(0, separator).Trim();
-            if (marker.Length == 0 || marker.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            if (!IsValidMarker(marker))
                 return false;
 
             if (!Guid.TryParse(entry.Substring(separator + 1).Trim(), out Guid providerGuid) || providerGuid == Guid.Empty)
@@ -63,6 +65,18 @@ namespace SourceControlSwitcher.Detection
 
             rule = new CustomProviderRule(marker, providerGuid);
             return true;
+        }
+
+        /// <summary>
+        /// A single file or folder name. Windows drops trailing dots from path names, so ".", ".." or "name." would
+        /// match the folder itself, its parent or "name": they are rejected.
+        /// </summary>
+        public static bool IsValidMarker(string marker)
+        {
+            return !string.IsNullOrWhiteSpace(marker)
+                && marker.Trim().Length == marker.Length
+                && marker.IndexOfAny(Path.GetInvalidFileNameChars()) < 0
+                && !marker.EndsWith(".", StringComparison.Ordinal);
         }
 
         public override string ToString() => Marker + "=" + ProviderGuid.ToString("D");

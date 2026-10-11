@@ -64,9 +64,9 @@ moving up to the drive root. The nearest marker wins; at each folder level the o
 2. TFVC bindings in the solution file (solution folder only);
 3. `.git`, then `.svn`, then `$tf`.
 
-If nothing is found and Perforce detection is enabled, it asks the Perforce client in the background. When a
-repository is found, the provider configured for it is activated; when nothing is found, the current provider is
-left unchanged.
+If nothing is found and Perforce detection is enabled, it asks the Perforce client in the background; if you pick a
+provider by hand while it runs, your choice is kept. When a repository is found, the provider configured for it is
+activated; when nothing is found, the current provider is left unchanged.
 
 Every switch is logged in the *Source Control Switcher* pane of the Output window:
 
@@ -105,7 +105,8 @@ For a source control client the extension does not know, add a rule mapping a ma
 .vault=01234567-89ab-cdef-0123-456789abcdef
 ```
 
-When `.vault` (a file or a folder) is found, that provider is activated. To find a provider's GUID, look for
+When `.vault` (a file or a folder) is found, that provider is activated. The marker must be a single file or folder
+name; names ending with a dot (such as `.` or `..`) are rejected. To find a provider's GUID, look for
 `SourceControlProviders\{GUID}` in the `.pkgdef` files of the client's extension folder.
 
 ## Troubleshooting

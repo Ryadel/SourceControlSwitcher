@@ -154,6 +154,7 @@ namespace SourceControlSwitcher.Services
         {
             ThreadHelper.ThrowIfNotOnUIThread();
             string directory = RepositoryDetector.GetStartDirectory(path);
+            Guid providerAtStart = _providers.GetActiveProviderGuid();
             _log.Verbose("No marker found; checking Perforce in the background.");
 
             _package.JoinableTaskFactory.RunAsync(async () =>
@@ -172,6 +173,13 @@ namespace SourceControlSwitcher.Services
 
                 if (generation != _generation)
                     return; // Another solution was opened meanwhile.
+
+                // The check can take seconds: a provider chosen by hand meanwhile must not be overridden.
+                if (_providers.GetActiveProviderGuid() != providerAtStart)
+                {
+                    _log.Verbose("The active provider changed while checking Perforce; leaving it unchanged.");
+                    return;
+                }
 
                 if (client == null)
                     _log.Verbose(PerforceDetector.ClientExecutable + " not found on PATH; Perforce detection skipped.");

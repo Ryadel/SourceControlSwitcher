@@ -26,6 +26,18 @@ namespace SourceControlSwitcher.Tests
         }
 
         [TestMethod]
+        [DataRow(".")]
+        [DataRow("..")]
+        [DataRow("...")]
+        [DataRow(".vault.")]
+        public void CustomProviders_MarkersEndingWithADot_AreRejected(string marker)
+        {
+            // Windows drops trailing dots: these would match the folder itself, its parent or another name.
+            Assert.IsFalse(CustomProviderRule.TryParse(marker + "=" + Guid.NewGuid(), out _));
+            Assert.ThrowsExactly<ArgumentException>(() => new CustomProviderRule(marker, Guid.NewGuid()));
+        }
+
+        [TestMethod]
         public void CustomProviders_EmptyValue_HasNoRules()
         {
             Assert.AreEqual(0, CustomProviderRule.ParseList(null, out var invalid).Count);

@@ -12,6 +12,14 @@ namespace SourceControlSwitcher.Tests
         private static readonly DetectionSettings Defaults = new DetectionSettings();
         private static readonly DetectionSettings NoParents = new DetectionSettings { SearchParentFolders = false };
 
+        private const string SlnWithBindings =
+            "Global\r\n\tGlobalSection(TeamFoundationVersionControl) = preSolution\r\n" +
+            "\t\tSccTeamFoundationServer = https://tfs.example.com/tfs/DefaultCollection\r\n\tEndGlobalSection\r\nEndGlobal\r\n";
+
+        private const string SlnxWithBindings =
+            "<Solution>\r\n  <Properties Name=\"TeamFoundationVersionControl\">\r\n" +
+            "    <Property Name=\"SccTeamFoundationServer\" Value=\"https://tfs.example.com/tfs\" />\r\n  </Properties>\r\n</Solution>\r\n";
+
         [TestMethod]
         public void GitFolder_IsDetected()
         {
@@ -97,9 +105,7 @@ namespace SourceControlSwitcher.Tests
             using (var tree = new TempTree())
             {
                 tree.Dir("repo/.git");
-                string sln = tree.File("repo/App.sln",
-                    "Global\r\n\tGlobalSection(TeamFoundationVersionControl) = preSolution\r\n" +
-                    "\t\tSccTeamFoundationServer = https://tfs.example.com/tfs/DefaultCollection\r\n\tEndGlobalSection\r\nEndGlobal\r\n");
+                string sln = tree.File("repo/App.sln", SlnWithBindings);
 
                 Assert.AreEqual(RepositoryKind.TeamFoundation, RepositoryDetector.Detect(sln, Defaults).Kind);
             }
@@ -110,11 +116,63 @@ namespace SourceControlSwitcher.Tests
         {
             using (var tree = new TempTree())
             {
-                string slnx = tree.File("repo/App.slnx",
-                    "<Solution>\r\n  <Properties Name=\"TeamFoundationVersionControl\">\r\n" +
-                    "    <Property Name=\"SccTeamFoundationServer\" Value=\"https://tfs.example.com/tfs\" />\r\n  </Properties>\r\n</Solution>\r\n");
+                string slnx = tree.File("repo/App.slnx", SlnxWithBindings);
 
                 Assert.AreEqual(RepositoryKind.TeamFoundation, RepositoryDetector.Detect(slnx, NoParents).Kind);
+            }
+        }
+
+        [TestMethod]
+        public void TeamFoundation_SlnxBindings_InFolderWithUriCharacters_AreDetected()
+        {
+            using (var tree = new TempTree())
+            {
+                string slnx = tree.File("C# 100%/App.slnx", SlnxWithBindings);
+
+                Assert.AreEqual(RepositoryKind.TeamFoundation, RepositoryDetector.Detect(slnx, NoParents).Kind);
+            }
+        }
+
+        [TestMethod]
+        public void TeamFoundation_KeyOutsideBindingSection_IsIgnored()
+        {
+            using (var tree = new TempTree())
+            {
+                tree.Dir("repo/.git");
+                string sln = tree.File("repo/App.sln",
+                    "# SccTeamFoundationServer = https://tfs.example.com/tfs\r\n" +
+                    "Project(\"{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}\") = \"SccTeamFoundationServer\", \"A\\A.csproj\", \"{1}\"\r\nEndProject\r\n" +
+                    "Global\r\n\tGlobalSection(SolutionProperties) = preSolution\r\n\t\tSccTeamFoundationServer = https://tfs.example.com/tfs\r\n" +
+                    "\tEndGlobalSection\r\n\tGlobalSection(TeamFoundationVersionControl) = preSolution\r\n\t\tSccTeamFoundationServer =\r\n" +
+                    "\tEndGlobalSection\r\nEndGlobal\r\n");
+
+                Assert.AreEqual(RepositoryKind.Git, RepositoryDetector.Detect(sln, Defaults).Kind);
+            }
+        }
+
+        [TestMethod]
+        public void TeamFoundation_SlnxKeyOutsideBindingSection_IsIgnored()
+        {
+            using (var tree = new TempTree())
+            {
+                string slnx = tree.File("repo/App.slnx",
+                    "<Solution>\r\n  <!-- <Property Name=\"SccTeamFoundationServer\" Value=\"https://tfs.example.com/tfs\" /> -->\r\n" +
+                    "  <Properties Name=\"Other\">\r\n    <Property Name=\"SccTeamFoundationServer\" Value=\"https://tfs.example.com/tfs\" />\r\n" +
+                    "  </Properties>\r\n  <Project Path=\"SccTeamFoundationServer/A.csproj\" />\r\n</Solution>\r\n");
+
+                Assert.AreEqual(RepositoryKind.None, RepositoryDetector.Detect(slnx, NoParents).Kind);
+            }
+        }
+
+        [TestMethod]
+        public void MalformedSlnx_IsNotTeamFoundation()
+        {
+            using (var tree = new TempTree())
+            {
+                tree.Dir("repo/.git");
+                string slnx = tree.File("repo/App.slnx", "<Solution><Properties Name=\"TeamFoundationVersionControl\">");
+
+                Assert.AreEqual(RepositoryKind.Git, RepositoryDetector.Detect(slnx, Defaults).Kind);
             }
         }
 
@@ -125,7 +183,7 @@ namespace SourceControlSwitcher.Tests
             {
                 var providerGuid = Guid.NewGuid();
                 tree.File("repo/.vault", "");
-                string sln = tree.File("repo/App.sln", "SccTeamFoundationServer = https://tfs.example.com/tfs");
+                string sln = tree.File("repo/App.sln", SlnWithBindings);
                 var settings = new DetectionSettings { CustomProviders = new[] { new CustomProviderRule(".vault", providerGuid) } };
 
                 Assert.AreEqual(RepositoryKind.Custom, RepositoryDetector.Detect(sln, settings).Kind);
@@ -138,7 +196,7 @@ namespace SourceControlSwitcher.Tests
             using (var tree = new TempTree())
             {
                 tree.Dir("repo/.git");
-                string sln = tree.File("repo/App.sln", "SccTeamFoundationServer = https://tfs.example.com/tfs");
+                string sln = tree.File("repo/App.sln", SlnWithBindings);
                 var settings = new DetectionSettings { DetectTeamFoundationFromSolution = false };
 
                 Assert.AreEqual(RepositoryKind.Git, RepositoryDetector.Detect(sln, settings).Kind);

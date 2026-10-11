@@ -4,6 +4,7 @@
 using System;
 using System.IO;
 using System.Security;
+using System.Xml;
 
 namespace SourceControlSwitcher.Detection
 {
@@ -20,7 +21,8 @@ namespace SourceControlSwitcher.Detection
         // Hidden folder TFVC creates at the root of a local workspace.
         public const string TeamFoundationLocalWorkspaceMarker = "$tf";
 
-        // Present in the GlobalSection(TeamFoundationVersionControl) of a solution bound to TFVC.
+        // A solution bound to TFVC has this key, with the server URL, in its TeamFoundationVersionControl section.
+        public const string TeamFoundationSection = "TeamFoundationVersionControl";
         public const string TeamFoundationSolutionBinding = "SccTeamFoundationServer";
 
         /// <summary>
@@ -111,25 +113,72 @@ namespace SourceControlSwitcher.Detection
             if (string.IsNullOrWhiteSpace(solutionPath))
                 return false;
 
-            // .sln keeps bindings in GlobalSection(TeamFoundationVersionControl). The text scan also covers .slnx
-            // files, should a converted solution carry the same key.
             string extension = Path.GetExtension(solutionPath);
-            if (!(string.Equals(extension, ".sln", StringComparison.OrdinalIgnoreCase) || string.Equals(extension, ".slnx", StringComparison.OrdinalIgnoreCase))
-                || !File.Exists(solutionPath))
-            {
+            bool isSln = string.Equals(extension, ".sln", StringComparison.OrdinalIgnoreCase);
+            bool isSlnx = string.Equals(extension, ".slnx", StringComparison.OrdinalIgnoreCase);
+            if (!(isSln || isSlnx) || !File.Exists(solutionPath))
                 return false;
-            }
 
             try
             {
-                foreach (var line in File.ReadLines(solutionPath))
-                {
-                    if (line.IndexOf(TeamFoundationSolutionBinding, StringComparison.OrdinalIgnoreCase) >= 0)
-                        return true;
-                }
+                return isSln ? HasSlnBindings(solutionPath) : HasSlnxBindings(solutionPath);
             }
-            catch (Exception ex) when (IsPathException(ex))
+            catch (Exception ex) when (IsPathException(ex) || ex is XmlException)
             {
+                return false;
+            }
+        }
+
+        // The key only counts inside its own section: the same text in a comment or a project name is not a binding.
+        private static bool HasSlnBindings(string solutionPath)
+        {
+            bool inSection = false;
+            foreach (var rawLine in File.ReadLines(solutionPath))
+            {
+                string line = rawLine.Trim();
+                if (!inSection)
+                    inSection = line.StartsWith("GlobalSection(" + TeamFoundationSection + ")", StringComparison.OrdinalIgnoreCase);
+                else if (line.StartsWith("EndGlobalSection", StringComparison.OrdinalIgnoreCase))
+                    inSection = false;
+                else if (IsServerBinding(line))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool IsServerBinding(string line)
+        {
+            int separator = line.IndexOf('=');
+            return separator > 0
+                && string.Equals(line.Substring(0, separator).Trim(), TeamFoundationSolutionBinding, StringComparison.OrdinalIgnoreCase)
+                && line.Substring(separator + 1).Trim().Length > 0;
+        }
+
+        // .slnx keeps the same section as <Properties Name="TeamFoundationVersionControl"><Property Name=... Value=... />.
+        private static bool HasSlnxBindings(string solutionPath)
+        {
+            var readerSettings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, IgnoreComments = true };
+            // A stream, not the path: XmlReader would read the path as a URI ('#' and '%' are legal in folder names).
+            using (var stream = File.OpenRead(solutionPath))
+            using (var reader = XmlReader.Create(stream, readerSettings))
+            {
+                while (reader.ReadToFollowing("Properties"))
+                {
+                    if (!string.Equals(reader.GetAttribute("Name"), TeamFoundationSection, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    using (var section = reader.ReadSubtree())
+                    {
+                        while (section.ReadToFollowing("Property"))
+                        {
+                            if (string.Equals(section.GetAttribute("Name"), TeamFoundationSolutionBinding, StringComparison.OrdinalIgnoreCase)
+                                && !string.IsNullOrWhiteSpace(section.GetAttribute("Value")))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
             }
             return false;
         }
