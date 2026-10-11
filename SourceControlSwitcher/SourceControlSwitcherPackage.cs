@@ -21,7 +21,7 @@ namespace SourceControlSwitcher
     /// <see cref="SourceControlSwitchService"/>.
     /// </summary>
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [InstalledProductRegistration("#110", "#112", "1.2.0")]
+    [InstalledProductRegistration("#110", "#112", "1.2.1")]
     [Guid(PackageGuids.PackageString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideOptionPage(typeof(GeneralOptions), "Source Control Switcher", "General", 0, 0, true)]

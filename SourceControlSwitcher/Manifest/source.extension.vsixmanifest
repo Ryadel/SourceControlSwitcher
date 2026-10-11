@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="F55A99AF-CA1C-4DE7-BBFB-08CF4F3AB282" Version="1.2.0" Language="en-US" Publisher="Ryadel" />
+        <Identity Id="F55A99AF-CA1C-4DE7-BBFB-08CF4F3AB282" Version="1.2.1" Language="en-US" Publisher="Ryadel" />
         <DisplayName>Source Control Switcher</DisplayName>
         <Description xml:space="preserve">Automatically sets the Source Control Provider according to the one used by the current Visual Studio solution: Git, Subversion, TFVC or Perforce.</Description>
         <MoreInfo>https://github.com/Ryadel/SourceControlSwitcher</MoreInfo>
