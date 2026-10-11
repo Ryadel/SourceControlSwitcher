@@ -1,3 +1,11 @@
+SourceControlSwitcher - v1.2.1
+------------------------------------------
+  * Fix: a Perforce check still running no longer overrides a provider chosen by hand in the meantime.
+  * Fix: TFVC bindings are recognized only inside the solution's TeamFoundationVersionControl section, so the
+    key in a comment or a project name no longer selects TFVC.
+  * Fix: custom markers ending with a dot ('.', '..', 'name.') are rejected; Windows drops trailing dots, so
+    they matched every folder or another name.
+
 SourceControlSwitcher - v1.2.0
 ------------------------------------------
   * Supports Visual Studio 2022 and Visual Studio 2026 (x64 and Arm64). Visual Studio 2015-2019: use 1.1.2.
