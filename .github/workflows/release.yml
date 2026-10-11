@@ -6,7 +6,7 @@ name: Release
 #
 # The Marketplace sign-in uses Microsoft Entra ID (GitHub OIDC, no secret to renew): environment variables
 # AZURE_CLIENT_ID and AZURE_TENANT_ID of the 'marketplace' environment name an identity that is a member of the
-# publisher. Until that is proven by a real publish, the VS_MARKETPLACE_PAT secret remains a fallback.
+# publisher.
 
 on:
   push:
@@ -92,14 +92,12 @@ jobs:
 
       - name: Sign in to Microsoft Entra ID
         uses: azure/login@v3
-        continue-on-error: ${{ github.ref_type == 'tag' }}
         with:
           client-id: ${{ vars.AZURE_CLIENT_ID }}
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           allow-no-subscriptions: true
 
       - name: Sign in to the Visual Studio Marketplace
-        id: signin
         shell: pwsh
         run: |
           # VsixPublisher ships with the Microsoft.VSSDK.BuildTools package: restore it. Use the copy under bin\lib,
@@ -110,54 +108,34 @@ jobs:
           if (-not $publisher) { throw 'VsixPublisher.exe not found' }
           "VSIXPUBLISHER=$($publisher.FullName)" >> $env:GITHUB_ENV
 
-          # A release falls back to VS_MARKETPLACE_PAT; a dry run fails, since checking this is its purpose.
-          function Fail([string] $message) {
-            if ($env:GITHUB_REF_TYPE -ne 'tag') { throw $message }
-            Write-Output "::warning::$message Publishing falls back to VS_MARKETPLACE_PAT."
-            exit 0
-          }
-
           # An Entra ID access token for Azure DevOps takes the place of the personal access token. VsixPublisher
-          # documents PAT authentication only: the login below is what proves the token is accepted.
+          # documents PAT authentication only, but accepts the token in its place.
           $azureDevOps = '499b84ac-1321-427f-aa17-267ca6975798'
           $token = az account get-access-token --resource $azureDevOps --query accessToken -o tsv
-          if ($LASTEXITCODE -ne 0 -or -not $token) { Fail 'Could not get a Microsoft Entra ID token for Azure DevOps.' }
+          if ($LASTEXITCODE -ne 0 -or -not $token) { throw 'Could not get a Microsoft Entra ID token for Azure DevOps.' }
           Write-Output "::add-mask::$token"
           "MARKETPLACE_TOKEN=$token" >> $env:GITHUB_ENV
 
           # The publisher lists the identity under this id (Manage Publishers > Members).
           $identity = az rest -u 'https://app.vssps.visualstudio.com/_apis/profile/profiles/me?api-version=7.1' --resource $azureDevOps
-          if ($LASTEXITCODE -eq 0) { Write-Host "Azure DevOps profile id of the publishing identity: $(($identity | ConvertFrom-Json).id)" }
+          if ($LASTEXITCODE -eq 0) {
+            $identity = $identity | ConvertFrom-Json
+            Write-Host "Azure DevOps profile id of the publishing identity: $($identity.id) ($($identity.displayName))"
+          }
 
           $publisherName = (Get-Content 'SourceControlSwitcher/Manifest/publishManifest.json' -Raw | ConvertFrom-Json).publisher
           & $publisher.FullName login -personalAccessToken $token -publisherName $publisherName -overwrite
-          if ($LASTEXITCODE -ne 0) { Fail "The Marketplace did not accept the Entra ID token for publisher '$publisherName'." }
-          "entra=true" >> $env:GITHUB_OUTPUT
+          if ($LASTEXITCODE -ne 0) { throw "The Marketplace did not accept the Entra ID token for publisher '$publisherName'." }
 
       - name: Publish to the Visual Studio Marketplace
         if: github.ref_type == 'tag'
         shell: pwsh
-        env:
-          VS_MARKETPLACE_PAT: ${{ secrets.VS_MARKETPLACE_PAT }}
         run: |
-          function Publish([string] $token) {
-            & $env:VSIXPUBLISHER publish `
-              -payload 'release/target/Release/SourceControlSwitcher.vsix' `
-              -publishManifest 'SourceControlSwitcher/Manifest/publishManifest.json' `
-              -personalAccessToken $token | Out-Host
-            return $LASTEXITCODE
-          }
-
-          $exitCode = 1
-          if ('${{ steps.signin.outputs.entra }}' -eq 'true') {
-            $exitCode = Publish $env:MARKETPLACE_TOKEN
-            if ($exitCode -ne 0) { Write-Output "::warning::Publishing with the Entra ID token failed (exit code $exitCode)." }
-          }
-          if ($exitCode -ne 0 -and $env:VS_MARKETPLACE_PAT) {
-            Write-Output "::warning::Publishing with VS_MARKETPLACE_PAT."
-            $exitCode = Publish $env:VS_MARKETPLACE_PAT
-          }
-          if ($exitCode -ne 0) { throw "VsixPublisher failed with exit code $exitCode" }
+          & $env:VSIXPUBLISHER publish `
+            -payload 'release/target/Release/SourceControlSwitcher.vsix' `
+            -publishManifest 'SourceControlSwitcher/Manifest/publishManifest.json' `
+            -personalAccessToken $env:MARKETPLACE_TOKEN
+          if ($LASTEXITCODE -ne 0) { throw "VsixPublisher failed with exit code $LASTEXITCODE" }
 
       - name: Create GitHub release
         if: github.ref_type == 'tag'
